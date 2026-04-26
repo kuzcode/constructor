@@ -1,0 +1,43 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-tg-bg text-white min-h-screen;
+    background-color: #0a0a0f;
+    background-image:
+      radial-gradient(ellipse 120% 80% at 50% -20%, rgba(51, 144, 236, 0.18), transparent),
+      radial-gradient(ellipse 80% 50% at 100% 50%, rgba(139, 92, 246, 0.08), transparent);
+  }
+
+  body.admin-light {
+    background-color: #eef0f5;
+    background-image: none;
+    color: #0f172a;
+  }
+
+  /* Контраст вторичного текста в светлой админ-теме (tailwind text-tg-muted фиксирован под тёмный фон) */
+  body.admin-light .text-tg-muted {
+    color: rgb(71 85 105) !important;
+  }
+
+  * {
+    @apply border-tg-border;
+  }
+}
+
+@layer utilities {
+  .glass-panel {
+    @apply bg-tg-card backdrop-blur-xl border border-tg-border shadow-glass;
+  }
+
+  .tap-highlight-none {
+    -webkit-tap-highlight-color: transparent;
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "name": "submit-order",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "node-appwrite": "^14.1.0"
+  }
+}
