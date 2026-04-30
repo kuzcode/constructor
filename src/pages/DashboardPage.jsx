@@ -6,18 +6,11 @@ import { Layout } from '../components/Layout';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { listMyApps } from '../services/appsService';
-import { useTelegramLogin } from '../hooks/useTelegramLogin';
 
 export function DashboardPage() {
-  const { user, linkTelegram } = useAuth();
-  const { ready, openTelegramAuth } = useTelegramLogin();
+  const { user, profile, logout } = useAuth();
   const [apps, setApps] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [tgMsg, setTgMsg] = useState('');
-  const [tgBusy, setTgBusy] = useState(false);
-
-  const prefs = user?.prefs || {};
-  const telegramLinked = !!(prefs.telegramId || prefs.telegram_id);
 
   useEffect(() => {
     let cancelled = false;
@@ -37,24 +30,6 @@ export function DashboardPage() {
     };
   }, [user]);
 
-  const linkTg = () => {
-    setTgMsg('');
-    openTelegramAuth(
-      async (idToken) => {
-        setTgBusy(true);
-        try {
-          await linkTelegram(idToken);
-          setTgMsg('Telegram привязан');
-        } catch (e) {
-          setTgMsg(e.message);
-        } finally {
-          setTgBusy(false);
-        }
-      },
-      (e) => setTgMsg(e.message),
-    );
-  };
-
   return (
     <Layout title="Ваши Mini Apps">
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-8">
@@ -69,24 +44,21 @@ export function DashboardPage() {
         </Link>
       </div>
 
-      {user?.email ? (
-        !telegramLinked && (
-          <Card className="mb-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div>
-                <p className="text-sm font-medium">Привязка Telegram</p>
-                <p className="text-xs text-tg-muted mt-1">
-                  Будет доступна авторизация через Telegram
-                </p>
-                {tgMsg ? <p className="text-xs mt-2 text-[#3390ec]">{tgMsg}</p> : null}
-              </div>
-              <Button type="button" variant="secondary" size="sm" disabled={!ready || tgBusy} onClick={linkTg}>
-                Привязать
-              </Button>
-            </div>
-          </Card>
-        )
-      ) : null}
+      <Card className="mb-6">
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-sm font-medium">Профиль</p>
+            <p className="text-xs text-tg-muted mt-1 truncate">
+              {profile?.userId
+                ? `${profile.firstName || profile.username || 'Пользователь'} · ID ${profile.userId}`
+                : (user?.email || user?.name || 'Аккаунт')}
+            </p>
+          </div>
+          <Button type="button" variant="secondary" size="sm" onClick={logout}>
+            Выйти
+          </Button>
+        </div>
+      </Card>
 
       {loading ? (
         <p className="text-tg-muted text-sm">Загрузка списка…</p>

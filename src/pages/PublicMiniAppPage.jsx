@@ -101,6 +101,8 @@ function PublicFree({ doc, slug }) {
   }, [varsInit]);
 
   const bg = free.settings?.background || { type: 'color', color: '#0a0a0f' };
+  const showProgressBar = !!free.settings?.showProgressBar;
+  const floatingButton = free.settings?.floatingButton || { enabled: false, label: '', url: '' };
   const [scrollY, setScrollY] = useState(0);
 
   useEffect(() => {
@@ -117,6 +119,9 @@ function PublicFree({ doc, slug }) {
   };
 
   const parallaxOffset = bg.type === 'image' && bg.mode === 'parallax' ? scrollY * 0.35 : 0;
+  const scrollProgress = typeof window !== 'undefined' && document.body.scrollHeight > window.innerHeight
+    ? Math.min(100, Math.max(0, (scrollY / (document.body.scrollHeight - window.innerHeight)) * 100))
+    : 0;
 
   const applyButtonVariable = (block) => {
     const a = block.action;
@@ -140,6 +145,11 @@ function PublicFree({ doc, slug }) {
 
   return (
     <div className="min-h-screen relative text-white" style={bgStyle()}>
+      {showProgressBar ? (
+        <div className="fixed top-0 left-0 right-0 z-30 h-1 bg-white/10">
+          <div className="h-full bg-[#3390ec] transition-[width] duration-75" style={{ width: `${scrollProgress}%` }} />
+        </div>
+      ) : null}
       {bg.type === 'image' && bg.fileId ? (
         <div
           className={clsx('fixed inset-0 z-0 overflow-hidden pointer-events-none', bg.mode === 'fixed' && '!absolute')}
@@ -164,6 +174,16 @@ function PublicFree({ doc, slug }) {
           applyButtonVariable={applyButtonVariable}
         />
       </div>
+      {floatingButton.enabled && floatingButton.url ? (
+        <a
+          href={floatingButton.url}
+          target="_blank"
+          rel="noreferrer"
+          className="fixed z-30 right-4 bottom-5 rounded-2xl px-4 py-3 bg-[#3390ec] text-white text-sm font-semibold shadow-lg shadow-blue-700/25"
+        >
+          {floatingButton.label || 'Открыть'}
+        </a>
+      ) : null}
     </div>
   );
 }

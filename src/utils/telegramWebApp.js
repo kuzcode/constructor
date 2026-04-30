@@ -32,6 +32,45 @@ export function readTelegramWebAppIdentity() {
   }
 }
 
+function cleanProfile(raw = {}) {
+  const userId = raw.userId != null ? String(raw.userId).trim() : '';
+  if (!userId) return null;
+  const username = String(raw.username || '').replace(/^@/, '').trim();
+  const firstName = String(raw.firstName || '').trim();
+  const lastName = String(raw.lastName || '').trim();
+  const avatarUrl = String(raw.avatarUrl || '').trim();
+  return { userId, username, firstName, lastName, avatarUrl };
+}
+
+export function readTelegramProfileFromRuntime() {
+  try {
+    const tg = window.Telegram?.WebApp;
+    const u = tg?.initDataUnsafe?.user;
+    const fromMiniApp = cleanProfile({
+      userId: u?.id,
+      username: u?.username,
+      firstName: u?.first_name,
+      lastName: u?.last_name,
+      avatarUrl: u?.photo_url,
+    });
+    if (fromMiniApp) return fromMiniApp;
+  } catch {
+    /* ignore */
+  }
+  try {
+    const q = new URLSearchParams(window.location.search || '');
+    return cleanProfile({
+      userId: q.get('tg_uid'),
+      username: q.get('tg_un'),
+      firstName: q.get('tg_fn'),
+      lastName: q.get('tg_ln'),
+      avatarUrl: q.get('tg_av'),
+    });
+  } catch {
+    return null;
+  }
+}
+
 function storageKey(slug) {
   return `miniapp_pub_tg_${slug}`;
 }
@@ -59,9 +98,25 @@ export function loadPublicTelegramContext(slug) {
 export function buildTelegramMiniAppOpenUrl(slug) {
   const s = String(slug || '').trim();
   const bot = (config.telegramBotUsername || '').replace(/^@/, '');
-  const short = (config.telegramWebAppShortName || '').trim();
-  if (!bot || !short || !s) return '';
-  return `https://t.me/${bot}/${short}?startapp=${encodeURIComponent(s)}`;
+  const shortRaw = (config.telegramWebAppShortName || '').trim();
+  const short = shortRaw && shortRaw !== bot ? shortRaw : '';
+  if (!bot || !s) return '';
+  const path = short ? `/${short}` : '';
+  return `https://t.me/${bot}${path}?startapp=${encodeURIComponent(s)}`;
+}
+
+export function buildTelegramMiniAppOpenUrlWithProfile(slug, profile) {
+  const base = buildTelegramMiniAppOpenUrl(slug);
+  if (!base) return '';
+  const p = cleanProfile(profile);
+  if (!p) return base;
+  const u = new URL(base);
+  u.searchParams.set('tg_uid', p.userId);
+  if (p.username) u.searchParams.set('tg_un', p.username);
+  if (p.firstName) u.searchParams.set('tg_fn', p.firstName);
+  if (p.lastName) u.searchParams.set('tg_ln', p.lastName);
+  if (p.avatarUrl) u.searchParams.set('tg_av', p.avatarUrl);
+  return u.toString();
 }
 
 export function getAdminTelegramUsernameFromPrefs(user) {

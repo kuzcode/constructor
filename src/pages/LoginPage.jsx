@@ -1,13 +1,13 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuth } from '../context/AuthContext';
-import { useTelegramLogin } from '../hooks/useTelegramLogin';
 import { Layout } from '../components/Layout';
 import { Button } from '../components/ui/Button';
 import { Input, Label } from '../components/ui/Input';
+import { buildTelegramMiniAppOpenUrlWithProfile, readTelegramProfileFromRuntime } from '../utils/telegramWebApp';
 
 const schema = z.object({
   email: z.string().email('Некорректная почта'),
@@ -19,9 +19,13 @@ export function LoginPage() {
   const location = useLocation();
   const from = location.state?.from || '/admin';
   const { loginEmail, loginTelegram } = useAuth();
-  const { ready, openTelegramAuth } = useTelegramLogin();
   const [err, setErr] = useState('');
   const [busy, setBusy] = useState(false);
+  const runtimeProfile = useMemo(() => readTelegramProfileFromRuntime(), []);
+  const tgLoginUrl = useMemo(
+    () => buildTelegramMiniAppOpenUrlWithProfile('auth', runtimeProfile || undefined),
+    [runtimeProfile],
+  );
 
   const {
     register,
@@ -42,22 +46,17 @@ export function LoginPage() {
     }
   });
 
-  const onTelegram = () => {
+  const onTelegram = async () => {
     setErr('');
-    openTelegramAuth(
-      async (idToken) => {
-        setBusy(true);
-        try {
-          await loginTelegram(idToken);
-          navigate(from, { replace: true });
-        } catch (e) {
-          setErr(e.message || 'Ошибка Telegram');
-        } finally {
-          setBusy(false);
-        }
-      },
-      (e) => setErr(e.message),
-    );
+    setBusy(true);
+    try {
+      await loginTelegram();
+      navigate(from, { replace: true });
+    } catch (e) {
+      setErr(e.message || 'Ошибка Telegram');
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -65,7 +64,7 @@ export function LoginPage() {
       <div className="max-w-md mx-auto mt-10">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold tracking-tight">Вход</h1>
-          <p className="text-tg-muted text-sm mt-2">Почта, пароль или Telegram</p>
+          <p className="text-tg-muted text-sm mt-2">Почта/пароль или Telegram Mini App</p>
         </div>
         <div className="glass-panel rounded-3xl p-6 border border-tg-border space-y-5">
           {err ? (
@@ -100,11 +99,18 @@ export function LoginPage() {
             type="button"
             variant="secondary"
             className="w-full"
-            disabled={busy || !ready}
+            disabled={busy}
             onClick={onTelegram}
           >
-            Войти через Telegram
+            Войти через Telegram (в приложении)
           </Button>
+          {tgLoginUrl ? (
+            <a href={tgLoginUrl} target="_blank" rel="noreferrer" className="block">
+              <Button type="button" variant="ghost" className="w-full">
+                Открыть Mini App для входа
+              </Button>
+            </a>
+          ) : null}
           <p className="text-center text-sm text-tg-muted">
             Нет аккаунта?{' '}
             <Link to="/register" className="text-[#3390ec] hover:underline">

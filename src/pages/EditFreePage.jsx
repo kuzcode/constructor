@@ -699,6 +699,73 @@ function FreeSettingsModal({ open, free, onClose, onApply }) {
           </div>
         ) : null}
 
+        <div className="rounded-2xl border border-tg-border bg-tg-surface/5 p-4 space-y-3">
+          <Label className="mb-0">Доп. возможности страницы</Label>
+          <label className="flex items-center gap-3 text-sm cursor-pointer">
+            <input
+              type="checkbox"
+              checked={!!local.settings?.showProgressBar}
+              onChange={(e) =>
+                setLocal({
+                  ...local,
+                  settings: { ...local.settings, showProgressBar: e.target.checked },
+                })
+              }
+            />
+            Показывать индикатор прокрутки сверху
+          </label>
+          <label className="flex items-center gap-3 text-sm cursor-pointer">
+            <input
+              type="checkbox"
+              checked={!!local.settings?.floatingButton?.enabled}
+              onChange={(e) =>
+                setLocal({
+                  ...local,
+                  settings: {
+                    ...local.settings,
+                    floatingButton: { ...(local.settings?.floatingButton || {}), enabled: e.target.checked },
+                  },
+                })
+              }
+            />
+            Плавающая кнопка действия
+          </label>
+          {local.settings?.floatingButton?.enabled ? (
+            <div className="grid sm:grid-cols-2 gap-3">
+              <div>
+                <Label>Текст кнопки</Label>
+                <Input
+                  value={local.settings?.floatingButton?.label || ''}
+                  onChange={(e) =>
+                    setLocal({
+                      ...local,
+                      settings: {
+                        ...local.settings,
+                        floatingButton: { ...(local.settings?.floatingButton || {}), label: e.target.value },
+                      },
+                    })
+                  }
+                />
+              </div>
+              <div>
+                <Label>Ссылка</Label>
+                <Input
+                  value={local.settings?.floatingButton?.url || ''}
+                  onChange={(e) =>
+                    setLocal({
+                      ...local,
+                      settings: {
+                        ...local.settings,
+                        floatingButton: { ...(local.settings?.floatingButton || {}), url: e.target.value },
+                      },
+                    })
+                  }
+                />
+              </div>
+            </div>
+          ) : null}
+        </div>
+
         <div className="rounded-3xl border border-[#3390ec]/20 bg-gradient-to-br from-[#3390ec]/[0.08] to-violet-500/[0.05] p-5">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
             <div>

@@ -32,6 +32,8 @@ export function defaultFreePayload() {
     variables: [],
     settings: {
       background: { type: 'color', color: '#0a0a0f' },
+      showProgressBar: false,
+      floatingButton: { enabled: false, label: 'Связаться', url: 'https://' },
     },
   };
 }

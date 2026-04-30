@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
 import { Moon, Sun } from 'lucide-react';
 import clsx from 'clsx';
 import { useAuth } from '../context/AuthContext';
@@ -7,9 +8,23 @@ import { Button } from './ui/Button';
 import { StarsBalanceChip } from './stars/StarsBalanceChip';
 
 export function Layout({ children, title, showNav = true }) {
-  const { user, logout } = useAuth();
+  const { user, profile, logout } = useAuth();
   const { light, toggle } = useAdminTheme();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef(null);
   useAdminBodyClass(showNav);
+
+  useEffect(() => {
+    if (!menuOpen) return undefined;
+    const onClick = (e) => {
+      if (!menuRef.current?.contains(e.target)) setMenuOpen(false);
+    };
+    document.addEventListener('mousedown', onClick);
+    return () => document.removeEventListener('mousedown', onClick);
+  }, [menuOpen]);
+
+  const profileName = profile?.firstName || profile?.username || user?.name || user?.email || user?.$id;
+  const avatarUrl = profile?.avatarUrl || user?.prefs?.telegramAvatarUrl || '';
 
   return (
     <div
@@ -45,19 +60,39 @@ export function Layout({ children, title, showNav = true }) {
                 {light ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
               </Button>
               {user ? (
-                <>
-                  <span
+                <div className="relative" ref={menuRef}>
+                  <button
+                    type="button"
+                    onClick={() => setMenuOpen((v) => !v)}
                     className={clsx(
-                      'hidden sm:inline text-sm max-w-[200px] truncate',
-                      light ? 'text-slate-600' : 'text-tg-muted',
+                      'flex items-center gap-2 rounded-xl px-2 py-1.5',
+                      light ? 'hover:bg-slate-100' : 'hover:bg-white/5',
                     )}
                   >
-                    {user.email || user.name || user.$id}
-                  </span>
-                  <Button variant="ghost" size="sm" type="button" onClick={() => logout()}>
-                    Выйти
-                  </Button>
-                </>
+                    {avatarUrl ? (
+                      <img src={avatarUrl} alt="" className="w-7 h-7 rounded-full object-cover border border-white/20" />
+                    ) : (
+                      <div className={clsx('w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold', light ? 'bg-slate-200 text-slate-700' : 'bg-white/15 text-white')}>
+                        {String(profileName || 'U').slice(0, 1).toUpperCase()}
+                      </div>
+                    )}
+                    <span className={clsx('hidden sm:inline text-sm max-w-[140px] truncate', light ? 'text-slate-700' : 'text-white/90')}>
+                      {profileName}
+                    </span>
+                  </button>
+                  {menuOpen ? (
+                    <div
+                      className={clsx(
+                        'absolute right-0 mt-2 w-40 rounded-2xl border p-1 shadow-lg',
+                        light ? 'bg-white border-slate-200' : 'bg-[#14141c] border-white/10',
+                      )}
+                    >
+                      <Button variant="ghost" size="sm" type="button" className="w-full justify-start" onClick={() => logout()}>
+                        Выйти
+                      </Button>
+                    </div>
+                  ) : null}
+                </div>
               ) : (
                 <Link to="/login">
                   <Button size="sm">Войти</Button>

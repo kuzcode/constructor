@@ -4,7 +4,6 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuth } from '../context/AuthContext';
-import { useTelegramLogin } from '../hooks/useTelegramLogin';
 import { Layout } from '../components/Layout';
 import { Button } from '../components/ui/Button';
 import { Input, Label } from '../components/ui/Input';
@@ -20,8 +19,7 @@ const schema = z
 
 export function RegisterPage() {
   const navigate = useNavigate();
-  const { registerEmail, loginTelegram } = useAuth();
-  const { ready, openTelegramAuth } = useTelegramLogin();
+  const { registerEmail } = useAuth();
   const [err, setErr] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -44,30 +42,12 @@ export function RegisterPage() {
     }
   });
 
-  const onTelegram = () => {
-    setErr('');
-    openTelegramAuth(
-      async (idToken) => {
-        setBusy(true);
-        try {
-          await loginTelegram(idToken);
-          navigate('/admin', { replace: true });
-        } catch (e) {
-          setErr(e.message || 'Ошибка Telegram');
-        } finally {
-          setBusy(false);
-        }
-      },
-      (e) => setErr(e.message),
-    );
-  };
-
   return (
     <Layout showNav={false}>
       <div className="max-w-md mx-auto mt-10">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold tracking-tight">Регистрация</h1>
-          <p className="text-tg-muted text-sm mt-2">Через почту или Telegram за один шаг</p>
+          <p className="text-tg-muted text-sm mt-2">Создайте аккаунт по почте</p>
         </div>
         <div className="glass-panel rounded-3xl p-6 border border-tg-border space-y-5">
           {err ? (
@@ -75,23 +55,6 @@ export function RegisterPage() {
               {err}
             </div>
           ) : null}
-          <Button
-            type="button"
-            variant="secondary"
-            className="w-full"
-            disabled={busy || !ready}
-            onClick={onTelegram}
-          >
-            Зарегистрироваться через Telegram
-          </Button>
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-tg-border" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase tracking-wide">
-              <span className="bg-tg-card px-2 text-tg-muted">или почта</span>
-            </div>
-          </div>
           <form onSubmit={onSubmit} className="space-y-4">
             <div>
               <Label>Имя (необязательно)</Label>

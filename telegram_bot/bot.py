@@ -25,12 +25,33 @@ T, E, P, K, D = g("TELEGRAM_BOT_TOKEN", "").strip(), g("APPWRITE_ENDPOINT", "").
 CI, CA, CW = g("APPWRITE_COL_PAYMENT_INTENTS", "payment_intents"), g("APPWRITE_COL_APPS", "apps"), g(
     "APPWRITE_COL_WALLETS", "wallets"
 )
+if not E.endswith("/v1"):
+    E = f"{E}/v1"
 H = {"X-Appwrite-Key": K, "X-Appwrite-Project": P, "Content-Type": "application/json"}
 if not all([T, E, P, K, D]):
     sys.exit("env: TELEGRAM_BOT_TOKEN, APPWRITE_ENDPOINT, PROJECT_ID, API_KEY, DATABASE_ID")
 bot = telebot.TeleBot(T, parse_mode=None)
 U = lambda c, i: f"{E}/databases/{D}/collections/{c}/documents/{i}"
 COL_DOCS = lambda c: f"{E}/databases/{D}/collections/{c}/documents"
+
+
+def _get_intent(iid):
+    """Найти intent по id в основной/запасных коллекциях."""
+    cols = [CI, "payment_intents", "paymentIntents"]
+    seen = set()
+    for col in cols:
+        col = (col or "").strip()
+        if not col or col in seen:
+            continue
+        seen.add(col)
+        try:
+            r = requests.get(U(col, iid), headers=H, timeout=60)
+            r.raise_for_status()
+            return aw(r.json()), col
+        except HTTPError as e:
+            if e.response is None or e.response.status_code != 404:
+                raise
+    return None, None
 
 
 def aw(j):
@@ -143,9 +164,9 @@ def paid(m):
     if not pid:
         return
     try:
-        r = requests.get(U(CI, pid), headers=H, timeout=60)
-        r.raise_for_status()
-        it = aw(r.json())
+        it, _ = _get_intent(pid)
+        if not it:
+            raise ValueError("intent_not_found")
         if it.get("status") == "completed":
             bot.reply_to(m, "Готово: баланс или публикация обновлены. Вернитесь в мини-приложение.")
             return
@@ -156,7 +177,7 @@ def paid(m):
             logging.warning("paid amount mismatch intent=%s stars=%s paid=%s", pid, it.get("stars"), sp.total_amount)
             bot.reply_to(m, "Сумма платежа не совпадает с счётом.")
             return
-        fulfill(r.json())
+        fulfill(it)
         bot.reply_to(m, "Готово: баланс или публикация обновлены. Вернитесь в мини-приложение.")
     except Exception:
         logging.exception("paid")
@@ -174,11 +195,15 @@ def start(m):
     if not arg:
         return bot.reply_to(m, "Откройте бота по ссылке из мини-приложения (там уже есть ID платежа).")
     try:
-        ir = requests.get(U(CI, arg), headers=H, timeout=60)
-        ir.raise_for_status()
-        it = aw(ir.json())
+        it, found_col = _get_intent(arg)
+        if not it:
+            return bot.reply_to(
+                m,
+                f"Платёж не найден. Проверьте APPWRITE_COL_PAYMENT_INTENTS и endpoint (/v1). ID: {arg}",
+            )
     except Exception:
         return bot.reply_to(m, "Платёж не найден.")
+    logging.info("intent found id=%s collection=%s", arg, found_col)
     if it.get("status") != "pending":
         return bot.reply_to(m, "Этот платёж уже обработан.")
     te = (it.get("telegramUserId") or "").strip()
@@ -200,9 +225,9 @@ def start(m):
 def pre(q):
     pid = (q.invoice_payload or "").strip()
     try:
-        r = requests.get(U(CI, pid), headers=H, timeout=60)
-        r.raise_for_status()
-        it = aw(r.json())
+        it, _ = _get_intent(pid)
+        if not it:
+            raise ValueError("intent_not_found")
     except Exception:
         return bot.answer_pre_checkout_query(q.id, ok=False, error_message="Платёж не найден.")
     te = (it.get("telegramUserId") or "").strip()

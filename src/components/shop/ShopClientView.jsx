@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ShoppingCart, ChevronLeft, ChevronRight, SlidersHorizontal, ArrowUpDown, Trash2 } from 'lucide-react';
+import { ShoppingCart, ChevronLeft, ChevronRight, SlidersHorizontal, ArrowUpDown, Trash2, Heart, Search } from 'lucide-react';
 import clsx from 'clsx';
 import { getImagePreviewUrl, getPublishedBySlug } from '../../services/appsService';
 import { submitShopOrder } from '../../services/ordersService';
@@ -44,6 +44,8 @@ export function ShopClientView({ slug, initialDoc }) {
   const [activeFilters, setActiveFilters] = useState({});
   const [sortKey, setSortKey] = useState('relevance');
   const [catEnabled, setCatEnabled] = useState({});
+  const [query, setQuery] = useState('');
+  const [favIds, setFavIds] = useState([]);
   const [orderBusy, setOrderBusy] = useState(false);
   const [orderErr, setOrderErr] = useState('');
   const orderSubmitLock = useRef(false);
@@ -120,6 +122,28 @@ export function ShopClientView({ slug, initialDoc }) {
   const hasSpecFilters = Object.keys(filterOptions).length > 0;
   const showFiltersButton = showCatFilter || hasSpecFilters;
 
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(`miniapp_shop_favs_${slug}`);
+      const parsed = JSON.parse(raw || '[]');
+      setFavIds(Array.isArray(parsed) ? parsed : []);
+    } catch {
+      setFavIds([]);
+    }
+  }, [slug]);
+
+  const toggleFav = (pid) => {
+    setFavIds((prev) => {
+      const next = prev.includes(pid) ? prev.filter((x) => x !== pid) : [...prev, pid];
+      try {
+        localStorage.setItem(`miniapp_shop_favs_${slug}`, JSON.stringify(next));
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+  };
+
   const filteredBySpecs = useMemo(() => {
     return products.filter((p) => {
       for (const [fname, fval] of Object.entries(activeFilters)) {
@@ -141,10 +165,22 @@ export function ShopClientView({ slug, initialDoc }) {
 
   const displayedProducts = useMemo(() => {
     const arr = [...filteredByCat];
+    const q = query.trim().toLowerCase();
+    const base = q
+      ? arr.filter((p) => {
+          const txt = `${p.name || ''} ${p.description || ''} ${(p.specs || []).map((s) => `${s.name}:${s.value}`).join(' ')}`.toLowerCase();
+          return txt.includes(q);
+        })
+      : arr;
     if (sortKey === 'priceAsc') arr.sort((a, b) => (Number(a.price) || 0) - (Number(b.price) || 0));
     else if (sortKey === 'priceDesc') arr.sort((a, b) => (Number(b.price) || 0) - (Number(a.price) || 0));
-    return arr;
-  }, [filteredByCat, sortKey]);
+    if (sortKey === 'favorites') {
+      base.sort((a, b) => Number(favIds.includes(b.id)) - Number(favIds.includes(a.id)));
+      return base;
+    }
+    base.sort((a, b) => arr.findIndex((x) => x.id === a.id) - arr.findIndex((x) => x.id === b.id));
+    return base;
+  }, [filteredByCat, sortKey, query, favIds]);
 
   const qtyForProduct = useCallback(
     (productId) => cart.filter((l) => l.productId === productId).reduce((a, l) => a + l.qty, 0),
@@ -276,6 +312,22 @@ export function ShopClientView({ slug, initialDoc }) {
               Нет в наличии
             </div>
           ) : null}
+          <button
+            type="button"
+            aria-label="В избранное"
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleFav(p.id);
+            }}
+            className={clsx(
+              'absolute top-2 right-2 p-1.5 rounded-full border',
+              favIds.includes(p.id)
+                ? 'bg-red-500/85 border-red-300/60 text-white'
+                : 'bg-black/45 border-white/20 text-white/80',
+            )}
+          >
+            <Heart className="w-4 h-4" fill={favIds.includes(p.id) ? 'currentColor' : 'none'} />
+          </button>
         </div>
         <div className="p-3 flex flex-col flex-1 gap-2">
           <p className="text-sm font-semibold line-clamp-2 min-h-[2.5rem]">{p.name}</p>
@@ -305,10 +357,16 @@ export function ShopClientView({ slug, initialDoc }) {
   };
 
   const sortLabel =
-    sortKey === 'priceAsc' ? 'Цена ↑' : sortKey === 'priceDesc' ? 'Цена ↓' : 'По релевантности';
+    sortKey === 'priceAsc'
+      ? 'Цена ↑'
+      : sortKey === 'priceDesc'
+        ? 'Цена ↓'
+        : sortKey === 'favorites'
+          ? 'Избранное'
+          : 'По релевантности';
 
   return (
-    <div className={clsx('min-h-screen pb-24 relative', theme.shell)}>
+    <div className={clsx('min-h-screen pb-24 relative', theme.shell, theme.font)}>
       {cartCount > 0 ? (
         <FloatingCart cartCount={cartCount} cartTotal={cartTotal} theme={theme} onOpen={() => setCheckoutOpen(true)} />
       ) : null}
@@ -320,6 +378,15 @@ export function ShopClientView({ slug, initialDoc }) {
         </header>
 
         <div className="flex items-center justify-between gap-2 mb-4">
+          <div className={clsx('flex items-center gap-2 rounded-2xl border px-3 py-2.5 flex-1 min-w-0', theme.card)}>
+            <Search className="w-4 h-4 shrink-0 opacity-70" />
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Поиск по товарам"
+              className="bg-transparent outline-none text-sm w-full"
+            />
+          </div>
           <div className="min-w-0">
             {showFiltersButton ? (
               <button
@@ -430,6 +497,7 @@ export function ShopClientView({ slug, initialDoc }) {
             ['relevance', 'По релевантности'],
             ['priceAsc', 'Цена по возрастанию'],
             ['priceDesc', 'Цена по убыванию'],
+            ['favorites', 'Сначала избранное'],
           ].map(([k, lab]) => (
             <button
               key={k}

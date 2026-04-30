@@ -9,6 +9,7 @@ export function normalizeFreePayload(raw) {
     ...d.settings,
     ...(f.settings || {}),
     background: { ...d.settings.background, ...(f.settings?.background || {}) },
+    floatingButton: { ...d.settings.floatingButton, ...(f.settings?.floatingButton || {}) },
   };
   return f;
 }

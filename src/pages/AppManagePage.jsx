@@ -30,7 +30,11 @@ import { createHostingIntent, getPaymentIntentById } from '../services/paymentIn
 import { buildPaymentBotDeepLink, getTelegramUserIdFromBrowser } from '../utils/telegramPayment';
 import { config } from '../config';
 import { Modal } from '../components/ui/Modal';
-import { buildTelegramMiniAppOpenUrl, getAdminTelegramUsernameFromPrefs } from '../utils/telegramWebApp';
+import {
+  buildTelegramMiniAppOpenUrlWithProfile,
+  getAdminTelegramUsernameFromPrefs,
+  readTelegramProfileFromRuntime,
+} from '../utils/telegramWebApp';
 import { getOrCreateWallet, spendStarsFromWallet } from '../services/walletsService';
 
 function periodStartIso(period) {
@@ -348,7 +352,8 @@ export function AppManagePage() {
   const absPreviewUrl =
     previewPath && typeof window !== 'undefined' ? `${window.location.origin}${previewPath}` : null;
   const slugForTg = normalizeSlug(pubDraft.slug) || doc.slug || '';
-  const telegramMiniAppUrl = slugForTg ? buildTelegramMiniAppOpenUrl(slugForTg) : '';
+  const runtimeTgProfile = readTelegramProfileFromRuntime() || null;
+  const telegramMiniAppUrl = slugForTg ? buildTelegramMiniAppOpenUrlWithProfile(slugForTg, runtimeTgProfile || undefined) : '';
   const ownerTg = getAdminTelegramUsernameFromPrefs(user);
   const publicUrlWithOwnerTg =
     absPreviewUrl && ownerTg ? `${absPreviewUrl}?tg_owner=${encodeURIComponent(ownerTg)}` : absPreviewUrl;

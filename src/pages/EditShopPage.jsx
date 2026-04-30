@@ -261,7 +261,14 @@ function ShopSettingsModal({ open, shop, onClose, onApply }) {
                     : 'border-tg-border bg-tg-surface hover:border-white/15'
                 }`}
               >
-                <div className="aspect-[16/10] rounded-xl border border-dashed border-white/20 bg-black/20 mb-2" />
+                <div className="rounded-xl border border-white/15 bg-black/20 mb-2 p-2">
+                  <div className="flex gap-1.5 mb-1.5">
+                    {(s.swatches || []).map((c) => (
+                      <span key={c} className="w-4 h-4 rounded-full border border-white/20" style={{ background: c }} />
+                    ))}
+                  </div>
+                  <div className="text-[11px] opacity-80">Font: {s.font || 'Sans'}</div>
+                </div>
                 <div className="font-medium leading-tight">{s.name}</div>
               </button>
             ))}
