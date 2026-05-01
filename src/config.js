@@ -7,6 +7,7 @@ export const config = {
   ordersCollectionId: process.env.REACT_APP_APPWRITE_COL_ORDERS_ID || '',
   freeFeedbackCollectionId: process.env.REACT_APP_APPWRITE_COL_FREE_FEEDBACK_ID || '',
   walletsCollectionId: process.env.REACT_APP_APPWRITE_COL_WALLETS_ID || '',
+  promoCodesCollectionId: process.env.REACT_APP_APPWRITE_COL_PROMOCODES_ID || '',
   /** Намерения оплаты (pending → бот выставляет счёт → completed) */
   paymentIntentsCollectionId: process.env.REACT_APP_APPWRITE_COL_PAYMENT_INTENTS_ID || '',
   /** Без @ — для ссылки t.me/...?start= */

@@ -124,7 +124,10 @@ def fulfill(it):
     elif kind == "hosting":
         aid, plan, slug = it.get("appId"), it.get("plan"), it.get("slug") or ""
         need = 5000 if plan == "yearly" else 500
-        if not aid or plan not in ("monthly", "yearly") or stars != need:
+        base_stars = int(it.get("baseStars") or need)
+        discount = int(it.get("discountStars") or 0)
+        expected = max(1, base_stars - max(0, discount))
+        if not aid or plan not in ("monthly", "yearly") or stars != expected:
             raise ValueError("hosting")
         ar = requests.get(U(CA, aid), headers=H, timeout=60)
         ar.raise_for_status()

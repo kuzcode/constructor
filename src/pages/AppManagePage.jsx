@@ -36,6 +36,7 @@ import {
   readTelegramProfileFromRuntime,
 } from '../utils/telegramWebApp';
 import { getOrCreateWallet, spendStarsFromWallet } from '../services/walletsService';
+import { resolvePromoCode } from '../services/promoCodesService';
 
 function periodStartIso(period) {
   if (period === 'all') return null;
@@ -67,6 +68,9 @@ export function AppManagePage() {
   const [hostingBusy, setHostingBusy] = useState(false);
   const [hostingMsg, setHostingMsg] = useState('');
   const [hostingIntentId, setHostingIntentId] = useState(null);
+  const [promoInputOpen, setPromoInputOpen] = useState(false);
+  const [promoCodeInput, setPromoCodeInput] = useState('');
+  const [promoApplied, setPromoApplied] = useState(null);
   const [linkHelpOpen, setLinkHelpOpen] = useState(false);
   const [linkMsg, setLinkMsg] = useState('');
   const [walletStars, setWalletStars] = useState(0);
@@ -200,6 +204,9 @@ export function AppManagePage() {
     if (needsHostingPaymentToPublish(doc, nextDraft.published)) {
       setHostingMsg('');
       setHostingPlan('monthly');
+      setPromoInputOpen(false);
+      setPromoCodeInput('');
+      setPromoApplied(null);
       setHostingModalOpen(true);
       return false;
     }
@@ -233,6 +240,9 @@ export function AppManagePage() {
   const persistPub = async () => persistPubWith(pubDraft);
 
   const hostingBotLink = hostingIntentId ? buildPaymentBotDeepLink(hostingIntentId) : '';
+  const baseHostingStars = hostingPlan === 'yearly' ? HOSTING_STARS_YEARLY : HOSTING_STARS_MONTHLY;
+  const promoDiscount = Math.min(baseHostingStars - 1, Math.max(0, Number(promoApplied?.value) || 0));
+  const payableHostingStars = Math.max(1, baseHostingStars - promoDiscount);
 
   const startHostingTelegramPayment = async () => {
     if (!doc || !user) return;
@@ -242,7 +252,7 @@ export function AppManagePage() {
       return;
     }
     const s = normalizeSlug(pubDraft.slug);
-    const stars = hostingPlan === 'yearly' ? HOSTING_STARS_YEARLY : HOSTING_STARS_MONTHLY;
+    const stars = payableHostingStars;
     const planKey = hostingPlan === 'yearly' ? 'yearly' : 'monthly';
     setHostingBusy(true);
     try {
@@ -252,6 +262,9 @@ export function AppManagePage() {
         plan: planKey,
         slug: s,
         stars,
+        baseStars: baseHostingStars,
+        discountStars: promoDiscount,
+        promoCode: promoApplied?.code || '',
         appType: doc.appType,
         telegramUserId: getTelegramUserIdFromBrowser(),
       });
@@ -293,7 +306,7 @@ export function AppManagePage() {
 
   const payHostingFromBalance = async () => {
     if (!doc || !user) return;
-    const stars = hostingPlan === 'yearly' ? HOSTING_STARS_YEARLY : HOSTING_STARS_MONTHLY;
+    const stars = payableHostingStars;
     setHostingBusy(true);
     setHostingMsg('');
     try {
@@ -322,6 +335,19 @@ export function AppManagePage() {
       setHostingMsg(e.message || 'Не удалось списать Stars');
     } finally {
       setHostingBusy(false);
+    }
+  };
+
+  const applyPromo = async () => {
+    setHostingMsg('');
+    try {
+      const p = await resolvePromoCode(promoCodeInput);
+      setPromoApplied(p);
+      setPromoInputOpen(false);
+      setHostingMsg(`Промокод ${p.code} применён: -${Math.min(baseHostingStars - 1, p.value)} ⭐`);
+    } catch (e) {
+      setPromoApplied(null);
+      setHostingMsg(e.message || 'Промокод не применён');
     }
   };
 
@@ -775,6 +801,9 @@ export function AppManagePage() {
             setHostingModalOpen(false);
             setHostingIntentId(null);
             setHostingMsg('');
+            setPromoInputOpen(false);
+            setPromoCodeInput('');
+            setPromoApplied(null);
           }
         }}
         title="Оплата размещения"
@@ -783,11 +812,10 @@ export function AppManagePage() {
       >
         <div className="space-y-4">
           <p className={clsx('text-sm', light ? 'text-slate-600' : 'text-tg-muted')}>
-            Публикация — платная услуга. Можно оплатить через бота или списать Stars с баланса. После оплаты
-            публикация включится автоматически, а поле <span className="font-mono">hostingPaidUntil</span> обновится.
+            Оплата пока доступна только через Telegram Stars. Пожалуйста, поддержите наш проект на этом этапе.
           </p>
           {!hostingIntentId ? (
-            <div className="space-y-2">
+            <div className="space-y-3">
               <label className="flex items-center gap-3 cursor-pointer text-sm">
                 <input
                   type="radio"
@@ -810,6 +838,50 @@ export function AppManagePage() {
                   <strong>{HOSTING_STARS_YEARLY} ⭐</strong> в год
                 </span>
               </label>
+              <div className={clsx('rounded-xl border px-3 py-2 text-sm', light ? 'border-slate-200 bg-slate-50 text-slate-700' : 'border-tg-border bg-tg-surface/30 text-white/85')}>
+                {promoDiscount > 0 ? (
+                  <>
+                    <p>Базовая цена: {baseHostingStars} ⭐</p>
+                    <p>Скидка: -{promoDiscount} ⭐ {promoApplied?.code ? `(${promoApplied.code})` : ''}</p>
+                    <p className="font-semibold">К оплате: {payableHostingStars} ⭐</p>
+                  </>
+                ) : (
+                  <p className="font-semibold">К оплате: {baseHostingStars} ⭐</p>
+                )}
+              </div>
+              <div className="space-y-2">
+                {!promoInputOpen ? (
+                  <Button type="button" variant="secondary" size="sm" className="w-full" onClick={() => setPromoInputOpen(true)}>
+                    Ввести промокод
+                  </Button>
+                ) : (
+                  <div className="flex gap-2">
+                    <Input
+                      value={promoCodeInput}
+                      onChange={(e) => setPromoCodeInput(e.target.value)}
+                      placeholder="PROMO2026"
+                    />
+                    <Button type="button" size="sm" onClick={applyPromo}>
+                      Применить
+                    </Button>
+                  </div>
+                )}
+                {promoApplied ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => {
+                      setPromoApplied(null);
+                      setPromoCodeInput('');
+                      setHostingMsg('');
+                    }}
+                  >
+                    Убрать промокод
+                  </Button>
+                ) : null}
+              </div>
             </div>
           ) : (
             <div className="rounded-2xl border border-tg-border bg-tg-surface/40 p-4 space-y-3">
@@ -839,7 +911,7 @@ export function AppManagePage() {
                 disabled={hostingBusy}
                 onClick={startHostingTelegramPayment}
               >
-                {hostingBusy ? 'Создаём платёж…' : 'Оплатить через Telegram'}
+                {hostingBusy ? 'Создаём платёж…' : `Оплатить через Telegram (${payableHostingStars} ⭐)`}
               </Button>
               <Button
                 type="button"
@@ -848,7 +920,7 @@ export function AppManagePage() {
                 disabled={hostingBusy}
                 onClick={payHostingFromBalance}
               >
-                {hostingBusy ? 'Списываем…' : `Оплатить с баланса (${walletStars} ⭐)`}
+                {hostingBusy ? 'Списываем…' : `Оплатить с баланса (${payableHostingStars} ⭐ / баланс ${walletStars} ⭐)`}
               </Button>
             </div>
           ) : (

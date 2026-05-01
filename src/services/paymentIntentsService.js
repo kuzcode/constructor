@@ -32,9 +32,20 @@ export async function createTopUpIntent({ userId, stars, telegramUserId }) {
 }
 
 /**
- * @param {{ userId: string, appId: string, plan: 'monthly'|'yearly', slug: string, stars: number, appType: string, telegramUserId?: string }} p
+ * @param {{ userId: string, appId: string, plan: 'monthly'|'yearly', slug: string, stars: number, appType: string, telegramUserId?: string, baseStars?: number, discountStars?: number, promoCode?: string }} p
  */
-export async function createHostingIntent({ userId, appId, plan, slug, stars, appType, telegramUserId }) {
+export async function createHostingIntent({
+  userId,
+  appId,
+  plan,
+  slug,
+  stars,
+  appType,
+  telegramUserId,
+  baseStars,
+  discountStars,
+  promoCode,
+}) {
   assertCol();
   const n = Math.max(1, Math.floor(Number(stars) || 0));
   return databases.createDocument(
@@ -45,6 +56,9 @@ export async function createHostingIntent({ userId, appId, plan, slug, stars, ap
       userId,
       type: 'hosting',
       stars: n,
+      baseStars: Math.max(1, Math.floor(Number(baseStars) || n)),
+      discountStars: Math.max(0, Math.floor(Number(discountStars) || 0)),
+      promoCode: String(promoCode || ''),
       status: 'pending',
       appId,
       plan,
