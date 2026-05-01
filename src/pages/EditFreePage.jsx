@@ -654,18 +654,24 @@ function FreeSettingsModal({ open, free, onClose, onApply }) {
         {bg.type === 'color' ? (
           <div className="flex items-center gap-3">
             <input type="color" value={bg.color || '#0a0a0f'} onChange={(e) => setBg({ color: e.target.value })} />
-            <Input value={bg.color} onChange={(e) => setBg({ color: e.target.value })} />
+            <span className="text-xs text-tg-muted font-mono">{bg.color || '#0a0a0f'}</span>
           </div>
         ) : null}
         {bg.type === 'gradient' ? (
           <div className="grid sm:grid-cols-3 gap-3">
             <div>
               <Label>От</Label>
-              <Input value={bg.from} onChange={(e) => setBg({ from: e.target.value })} />
+              <div className="flex items-center gap-2">
+                <input type="color" value={bg.from || '#1a1a2e'} onChange={(e) => setBg({ from: e.target.value })} />
+                <span className="text-xs text-tg-muted font-mono">{bg.from}</span>
+              </div>
             </div>
             <div>
               <Label>До</Label>
-              <Input value={bg.to} onChange={(e) => setBg({ to: e.target.value })} />
+              <div className="flex items-center gap-2">
+                <input type="color" value={bg.to || '#0a0a0f'} onChange={(e) => setBg({ to: e.target.value })} />
+                <span className="text-xs text-tg-muted font-mono">{bg.to}</span>
+              </div>
             </div>
             <div>
               <Label>Угол °</Label>
@@ -999,7 +1005,7 @@ function BlockEditModal({
                 value={local.color?.startsWith('#') ? local.color : '#ffffff'}
                 onChange={(e) => setLocal({ ...local, color: e.target.value })}
               />
-              <Input value={local.color} onChange={(e) => setLocal({ ...local, color: e.target.value })} />
+              <span className="text-xs text-tg-muted font-mono">{local.color}</span>
             </div>
           </div>
           <div>
@@ -1073,7 +1079,7 @@ function BlockEditModal({
                   value={local.bgColor?.startsWith('#') ? local.bgColor : '#3390ec'}
                   onChange={(e) => setLocal({ ...local, bgColor: e.target.value })}
                 />
-                <Input value={local.bgColor} onChange={(e) => setLocal({ ...local, bgColor: e.target.value })} />
+                <span className="text-xs text-tg-muted font-mono">{local.bgColor}</span>
               </div>
             </div>
             <div>
@@ -1084,7 +1090,7 @@ function BlockEditModal({
                   value={local.textColor?.startsWith('#') ? local.textColor : '#ffffff'}
                   onChange={(e) => setLocal({ ...local, textColor: e.target.value })}
                 />
-                <Input value={local.textColor} onChange={(e) => setLocal({ ...local, textColor: e.target.value })} />
+                <span className="text-xs text-tg-muted font-mono">{local.textColor}</span>
               </div>
             </div>
           </div>
@@ -1308,7 +1314,7 @@ function BlockEditModal({
                 value={local.textColor?.startsWith('#') ? local.textColor : '#ffffff'}
                 onChange={(e) => setLocal({ ...local, textColor: e.target.value })}
               />
-              <Input value={local.textColor} onChange={(e) => setLocal({ ...local, textColor: e.target.value })} />
+              <span className="text-xs text-tg-muted font-mono">{local.textColor}</span>
             </div>
           </div>
         </div>
@@ -1357,7 +1363,7 @@ function BlockEditModal({
                     value={local.bgColor?.startsWith('#') ? local.bgColor : '#1a1a24'}
                     onChange={(e) => setLocal({ ...local, bgColor: e.target.value })}
                   />
-                  <Input value={local.bgColor} onChange={(e) => setLocal({ ...local, bgColor: e.target.value })} />
+                  <span className="text-xs text-tg-muted font-mono">{local.bgColor}</span>
                 </>
               ) : null}
             </div>
@@ -1443,7 +1449,7 @@ function BlockEditModal({
                     value={local.bgColor?.startsWith('#') ? local.bgColor : '#ffffff'}
                     onChange={(e) => setLocal({ ...local, bgColor: e.target.value })}
                   />
-                  <Input value={local.bgColor} onChange={(e) => setLocal({ ...local, bgColor: e.target.value })} />
+                  <span className="text-xs text-tg-muted font-mono">{local.bgColor}</span>
                 </div>
               ) : null}
             </div>
@@ -1455,7 +1461,7 @@ function BlockEditModal({
                   value={local.textColor?.startsWith('#') ? local.textColor : '#ffffff'}
                   onChange={(e) => setLocal({ ...local, textColor: e.target.value })}
                 />
-                <Input value={local.textColor} onChange={(e) => setLocal({ ...local, textColor: e.target.value })} />
+                <span className="text-xs text-tg-muted font-mono">{local.textColor}</span>
               </div>
             </div>
           </div>

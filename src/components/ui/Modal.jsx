@@ -4,8 +4,9 @@ import clsx from 'clsx';
 import { createPortal } from 'react-dom';
 import { useAdminTheme } from '../../context/AdminThemeContext';
 
-export function Modal({ open, title, children, onClose, wide, className, stackOrder = 100 }) {
+export function Modal({ open, title, children, onClose, wide, className, stackOrder = 100, tone = 'auto' }) {
   const { light } = useAdminTheme();
+  const isLight = tone === 'light' ? true : tone === 'dark' ? false : light;
   if (typeof document === 'undefined') {
     return null;
   }
@@ -21,7 +22,7 @@ export function Modal({ open, title, children, onClose, wide, className, stackOr
         >
           <motion.button
             type="button"
-            className={clsx('absolute inset-0 backdrop-blur-sm', light ? 'bg-slate-900/25' : 'bg-black/55')}
+            className={clsx('absolute inset-0 backdrop-blur-sm', isLight ? 'bg-slate-900/25' : 'bg-black/55')}
             aria-label="Закрыть"
             onClick={onClose}
             initial={{ opacity: 0 }}
@@ -32,8 +33,8 @@ export function Modal({ open, title, children, onClose, wide, className, stackOr
             role="dialog"
             aria-modal
             className={clsx(
-              'relative z-10 w-full rounded-t-3xl sm:rounded-3xl max-h-[92vh] overflow-hidden flex flex-col border shadow-lifted',
-              light ? 'bg-white border-slate-200/90' : 'glass-panel border-tg-border',
+              'relative z-10 w-full rounded-3xl max-h-[92vh] overflow-hidden flex flex-col border shadow-lifted',
+              isLight ? 'bg-white border-slate-200/90' : 'glass-panel border-tg-border',
               wide ? 'sm:max-w-2xl' : 'sm:max-w-md',
               className,
             )}
@@ -45,11 +46,11 @@ export function Modal({ open, title, children, onClose, wide, className, stackOr
             <div
               className={clsx(
                 'flex items-center justify-between px-5 py-4 border-b',
-                light ? 'border-slate-200' : 'border-tg-border',
+                isLight ? 'border-slate-200' : 'border-tg-border',
               )}
             >
               <h2
-                className={clsx('text-lg font-semibold tracking-tight', light ? 'text-slate-900' : 'text-white')}
+                className={clsx('text-lg font-semibold tracking-tight', isLight ? 'text-slate-900' : 'text-white')}
               >
                 {title}
               </h2>
@@ -58,7 +59,7 @@ export function Modal({ open, title, children, onClose, wide, className, stackOr
                 onClick={onClose}
                 className={clsx(
                   'p-2 rounded-xl',
-                  light ? 'text-slate-500 hover:text-slate-900 hover:bg-slate-100' : 'text-tg-muted hover:text-white hover:bg-white/5',
+                  isLight ? 'text-slate-500 hover:text-slate-900 hover:bg-slate-100' : 'text-tg-muted hover:text-white hover:bg-white/5',
                 )}
               >
                 <X className="w-5 h-5" />

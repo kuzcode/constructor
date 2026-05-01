@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import sys
+import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -16,6 +17,7 @@ import requests
 import telebot
 from requests.exceptions import HTTPError
 from telebot import types
+from telebot.apihelper import ApiTelegramException
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
 g = os.environ.get
@@ -241,5 +243,17 @@ def pre(q):
 
 
 if __name__ == "__main__":
-    bot.delete_webhook(drop_pending_updates=True)
-    bot.infinity_polling(skip_pending=True, timeout=60)
+    while True:
+        try:
+            bot.delete_webhook(drop_pending_updates=True)
+            bot.infinity_polling(skip_pending=True, timeout=60)
+        except ApiTelegramException as e:
+            msg = str(e)
+            if "Error code: 409" in msg or "terminated by other getUpdates request" in msg:
+                logging.error("409 conflict: another bot instance/webhook is active. Retry in 10s...")
+                time.sleep(10)
+                continue
+            raise
+        except Exception:
+            logging.exception("polling crashed; retry in 5s")
+            time.sleep(5)

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ExternalLink, Pencil } from 'lucide-react';
+import { CircleHelp, Copy, ExternalLink, Pencil } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { Layout } from '../components/Layout';
 import { Card } from '../components/ui/Card';
@@ -67,6 +67,8 @@ export function AppManagePage() {
   const [hostingBusy, setHostingBusy] = useState(false);
   const [hostingMsg, setHostingMsg] = useState('');
   const [hostingIntentId, setHostingIntentId] = useState(null);
+  const [linkHelpOpen, setLinkHelpOpen] = useState(false);
+  const [linkMsg, setLinkMsg] = useState('');
   const [walletStars, setWalletStars] = useState(0);
   const publishRequestedRef = useRef(false);
 
@@ -358,6 +360,20 @@ export function AppManagePage() {
   const publicUrlWithOwnerTg =
     absPreviewUrl && ownerTg ? `${absPreviewUrl}?tg_owner=${encodeURIComponent(ownerTg)}` : absPreviewUrl;
   const hostingActive = hasActiveHosting(doc);
+  const copyPublicLink = async () => {
+    const link = telegramMiniAppUrl || publicUrlWithOwnerTg || absPreviewUrl || '';
+    if (!link) {
+      setLinkMsg('Сначала задайте адрес страницы');
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(link);
+      setLinkMsg('Ссылка скопирована');
+      setTimeout(() => setLinkMsg(''), 1800);
+    } catch {
+      setLinkMsg('Не удалось скопировать');
+    }
+  };
 
   return (
     <Layout title={doc.title || 'Проект'}>
@@ -625,31 +641,17 @@ export function AppManagePage() {
               <h2 className="text-lg font-semibold mb-1">Адрес и публикация</h2>
               {doc.published && previewPath ? (
                 <div className="space-y-2 mt-3">
-                  {telegramMiniAppUrl ? (
-                    <p className={clsx('text-sm', light ? 'text-slate-600' : 'text-tg-muted')}>
-                      <span className={light ? 'font-medium text-slate-800' : 'font-medium text-white/90'}>
-                        Клиенты в Telegram Mini App
-                      </span>
-                      {' — '}
-                      их @username попадёт в заказ автоматически. Ссылка:{' '}
-                      <a
-                        href={telegramMiniAppUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="underline break-all text-[#3390ec]"
-                      >
-                        {telegramMiniAppUrl}
-                      </a>
-                    </p>
-                  ) : (
-                    <p className={clsx('text-sm', light ? 'text-slate-600' : 'text-tg-muted')}>
-                      Чтобы в заказе автоматически появлялся @username клиента, задайте в окружении{' '}
-                      <code className={clsx('text-xs', light ? 'text-slate-800' : 'text-white/85')}>
-                        REACT_APP_TELEGRAM_WEBAPP_SHORT_NAME
-                      </code>{' '}
-                      (короткое имя Mini App в BotFather) и открывайте витрину через «Открыть в Telegram».
-                    </p>
-                  )}
+                  <div className="flex flex-wrap gap-2">
+                    <Button type="button" variant="secondary" size="sm" onClick={copyPublicLink}>
+                      <Copy className="w-4 h-4" />
+                      Скопировать ссылку
+                    </Button>
+                    <Button type="button" variant="secondary" size="sm" onClick={() => setLinkHelpOpen(true)}>
+                      <CircleHelp className="w-4 h-4" />
+                      Как подключить Mini App
+                    </Button>
+                  </div>
+                  {linkMsg ? <p className={clsx('text-xs', light ? 'text-slate-600' : 'text-tg-muted')}>{linkMsg}</p> : null}
                   {ownerTg && publicUrlWithOwnerTg ? (
                     <p className={clsx('text-sm', light ? 'text-slate-600' : 'text-tg-muted')}>
                       Ссылка с вашим Telegram-ником в параметре{' '}
@@ -751,6 +753,20 @@ export function AppManagePage() {
       ) : null}
 
       <DraftActionDock show={!!pubDirty} saving={saving} onSave={persistPub} onCancel={revertPub} />
+
+      <Modal open={linkHelpOpen} onClose={() => setLinkHelpOpen(false)} title="Подключение Mini App">
+        <div className="space-y-3 text-sm">
+          <p className={clsx(light ? 'text-slate-700' : 'text-white/85')}>
+            1) Откройте <a className="text-[#3390ec] underline" href="https://t.me/BotFather" target="_blank" rel="noreferrer">@BotFather</a> и выберите вашего бота.
+          </p>
+          <p className={clsx(light ? 'text-slate-700' : 'text-white/85')}>
+            2) Задайте Mini App через команду <code>/newapp</code> (или в меню Bot Settings → Menu Button).
+          </p>
+          <p className={clsx(light ? 'text-slate-700' : 'text-white/85')}>
+            3) Укажите URL вашего сайта и short name. После этого ссылка будет открывать Mini App, а не чат.
+          </p>
+        </div>
+      </Modal>
 
       <Modal
         open={hostingModalOpen}

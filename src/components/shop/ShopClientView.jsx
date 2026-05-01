@@ -32,6 +32,7 @@ export function ShopClientView({ slug, initialDoc }) {
   const [doc, setDoc] = useState(initialDoc);
   const shop = doc?.shopPayload || {};
   const theme = shopThemeClass(shop.styleId);
+  const modalTone = [1, 2, 6].includes(Number(shop.styleId) || 1) ? 'light' : 'dark';
 
   const [cart, setCart] = useState([]);
   const [detailProduct, setDetailProduct] = useState(null);
@@ -426,11 +427,11 @@ export function ShopClientView({ slug, initialDoc }) {
         </div>
       </div>
 
-      <Modal open={filtersOpen} onClose={() => setFiltersOpen(false)} title="Фильтры" wide>
-        <div className="space-y-5">
+      <Modal open={filtersOpen} onClose={() => setFiltersOpen(false)} title="Фильтры" wide tone={modalTone} className={clsx(theme.panel, theme.panelText)}>
+        <div className={clsx('space-y-5', theme.panelText)}>
           {showCatFilter ? (
             <div>
-              <Label>Категории</Label>
+              <Label className={theme.panelSubtle}>Категории</Label>
               <div className="mt-2 space-y-2">
                 {hasUncat ? (
                   <label className="flex items-center gap-3 text-sm cursor-pointer">
@@ -457,14 +458,14 @@ export function ShopClientView({ slug, initialDoc }) {
           ) : null}
           {Object.entries(filterOptions).map(([name, values]) => (
             <div key={name}>
-              <Label>{name}</Label>
+              <Label className={theme.panelSubtle}>{name}</Label>
               <div className="flex flex-wrap gap-2 mt-2">
                 <button
                   type="button"
                   onClick={() => setActiveFilters((f) => ({ ...f, [name]: '' }))}
                   className={clsx(
                     'px-3 py-1.5 rounded-full text-xs border',
-                    !activeFilters[name] ? 'border-[#3390ec] bg-[#3390ec]/20' : 'border-white/15',
+                    !activeFilters[name] ? 'border-[#3390ec] bg-[#3390ec]/20' : theme.panelBorder,
                   )}
                 >
                   Все
@@ -476,7 +477,7 @@ export function ShopClientView({ slug, initialDoc }) {
                     onClick={() => setActiveFilters((f) => ({ ...f, [name]: v }))}
                     className={clsx(
                       'px-3 py-1.5 rounded-full text-xs border',
-                      activeFilters[name] === v ? 'border-[#3390ec] bg-[#3390ec]/20' : 'border-white/15',
+                      activeFilters[name] === v ? 'border-[#3390ec] bg-[#3390ec]/20' : theme.panelBorder,
                     )}
                   >
                     {v}
@@ -491,7 +492,7 @@ export function ShopClientView({ slug, initialDoc }) {
         </div>
       </Modal>
 
-      <Modal open={sortOpen} onClose={() => setSortOpen(false)} title="Сортировать">
+      <Modal open={sortOpen} onClose={() => setSortOpen(false)} title="Сортировать" tone={modalTone} className={clsx(theme.panel, theme.panelText)}>
         <div className="space-y-2">
           {[
             ['relevance', 'По релевантности'],
@@ -508,7 +509,7 @@ export function ShopClientView({ slug, initialDoc }) {
               }}
               className={clsx(
                 'w-full text-left px-4 py-3 rounded-2xl border text-sm font-medium transition',
-                sortKey === k ? 'border-[#3390ec] bg-[#3390ec]/15' : 'border-white/10 bg-white/5',
+                sortKey === k ? 'border-[#3390ec] bg-[#3390ec]/15' : clsx(theme.panelBorder, 'bg-transparent'),
               )}
             >
               {lab}
@@ -517,7 +518,14 @@ export function ShopClientView({ slug, initialDoc }) {
         </div>
       </Modal>
 
-      <Modal open={!!detailProduct} onClose={() => setDetailProduct(null)} title={detailProduct?.name || ''} wide>
+      <Modal
+        open={!!detailProduct}
+        onClose={() => setDetailProduct(null)}
+        title={detailProduct?.name || ''}
+        wide
+        tone={modalTone}
+        className={clsx(theme.panel, theme.panelText)}
+      >
         {detailProduct ? (
           <div className="space-y-4">
             {detailProduct.imageFileIds?.length ? (
@@ -549,16 +557,16 @@ export function ShopClientView({ slug, initialDoc }) {
                 ) : null}
               </div>
             ) : null}
-            <p className={clsx('text-sm', theme.muted)}>{detailProduct.description}</p>
+            <p className={clsx('text-sm', theme.panelSubtle)}>{detailProduct.description}</p>
             {(detailProduct.specs || []).some((s) => s.name && s.value) ? (
-              <div className="rounded-2xl border border-white/10 overflow-hidden">
+              <div className={clsx('rounded-2xl border overflow-hidden', theme.panelBorder)}>
                 <table className="w-full text-sm">
                   <tbody>
                     {(detailProduct.specs || [])
                       .filter((s) => s.name && s.value)
                       .map((s) => (
-                        <tr key={s.id} className="border-b border-white/5 last:border-0">
-                          <td className="py-2 px-3 text-white/55 w-[40%]">{s.name}</td>
+                        <tr key={s.id} className={clsx('border-b last:border-0', theme.panelBorder)}>
+                          <td className={clsx('py-2 px-3 w-[40%]', theme.panelSubtle)}>{s.name}</td>
                           <td className="py-2 px-3">{s.value}</td>
                         </tr>
                       ))}
@@ -571,7 +579,7 @@ export function ShopClientView({ slug, initialDoc }) {
               <div className="space-y-3">
                 {(detailProduct.colors || []).filter((c) => c.hex).length >= 1 ? (
                   <div>
-                    <Label>Цвет</Label>
+                    <Label className={theme.panelSubtle}>Цвет</Label>
                     <div className="flex gap-2 overflow-x-auto pb-1 mt-2">
                       {(detailProduct.colors || [])
                         .filter((c) => c.hex)
@@ -582,7 +590,7 @@ export function ShopClientView({ slug, initialDoc }) {
                             onClick={() => setDetailColor(c.hex)}
                             className={clsx(
                               'w-10 h-10 rounded-full border-2 shrink-0 transition',
-                              detailColor === c.hex ? 'border-white scale-110' : 'border-transparent',
+                              detailColor === c.hex ? 'border-[#3390ec] scale-110' : 'border-transparent',
                             )}
                             style={{ backgroundColor: c.hex }}
                           />
@@ -592,7 +600,7 @@ export function ShopClientView({ slug, initialDoc }) {
                 ) : null}
                 {(detailProduct.sizes || []).filter((s) => s.name).length >= 1 ? (
                   <div>
-                    <Label>Размер</Label>
+                    <Label className={theme.panelSubtle}>Размер</Label>
                     <div className="flex gap-2 overflow-x-auto pb-1 mt-2">
                       {(detailProduct.sizes || [])
                         .filter((s) => s.name)
@@ -603,7 +611,7 @@ export function ShopClientView({ slug, initialDoc }) {
                             onClick={() => setDetailSize(s.name)}
                             className={clsx(
                               'px-3 py-2 rounded-xl text-xs font-medium border shrink-0 whitespace-nowrap',
-                              detailSize === s.name ? 'border-[#3390ec] bg-[#3390ec]/20' : 'border-white/15',
+                              detailSize === s.name ? 'border-[#3390ec] bg-[#3390ec]/20' : theme.panelBorder,
                             )}
                           >
                             {s.name}
@@ -684,22 +692,22 @@ export function ShopClientView({ slug, initialDoc }) {
         ) : null}
       </Modal>
 
-      <Modal open={checkoutOpen} onClose={() => setCheckoutOpen(false)} title="Оформление заказа" wide>
+      <Modal open={checkoutOpen} onClose={() => setCheckoutOpen(false)} title="Оформление заказа" wide tone={modalTone} className={clsx(theme.panel, theme.panelText)}>
         <div className="space-y-4">
           {cart.length === 0 ? (
-            <p className="text-sm text-tg-muted">Корзина пуста</p>
+            <p className={clsx('text-sm', theme.panelSubtle)}>Корзина пуста</p>
           ) : (
             <>
               <ul className="space-y-3 text-sm max-h-64 overflow-y-auto">
                 {cart.map((l) => (
-                  <li key={l.key} className="flex flex-wrap items-center gap-2 border-b border-white/5 pb-3">
+                  <li key={l.key} className={clsx('flex flex-wrap items-center gap-2 border-b pb-3', theme.panelBorder)}>
                     <div className="flex-1 min-w-0">
                       <p className="truncate font-medium">
                         {l.name}
                         {l.colorHex ? ` · ${l.colorHex}` : ''}
                         {l.sizeName ? ` · ${l.sizeName}` : ''}
                       </p>
-                      <p className={clsx('text-xs mt-0.5', theme.muted)}>{l.price} ₽ × {l.qty}</p>
+                      <p className={clsx('text-xs mt-0.5', theme.panelSubtle)}>{l.price} ₽ × {l.qty}</p>
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
                       <Button
@@ -742,7 +750,7 @@ export function ShopClientView({ slug, initialDoc }) {
                       </Button>
                       <button
                         type="button"
-                        className="p-2 rounded-xl text-red-300 hover:bg-white/5 ml-1"
+                        className={clsx('p-2 rounded-xl ml-1', theme.panelSubtle)}
                         aria-label="Удалить"
                         onClick={() => setCart((prev) => prev.filter((x) => x.key !== l.key))}
                       >
@@ -756,19 +764,19 @@ export function ShopClientView({ slug, initialDoc }) {
               <p className="font-semibold">Итого: {cartTotal} ₽</p>
               {(shop.checkout?.requireName ?? true) ? (
                 <div>
-                  <Label>Имя</Label>
+                  <Label className={theme.panelSubtle}>Имя</Label>
                   <Input value={cust.name} onChange={(e) => setCust({ ...cust, name: e.target.value })} />
                 </div>
               ) : null}
               {shop.checkout?.requireAddress ? (
                 <div>
-                  <Label>Адрес</Label>
+                  <Label className={theme.panelSubtle}>Адрес</Label>
                   <Textarea value={cust.address} onChange={(e) => setCust({ ...cust, address: e.target.value })} />
                 </div>
               ) : null}
               {tgBuyer.username.trim() ? (
                 <div>
-                  <Label>Telegram</Label>
+                  <Label className={theme.panelSubtle}>Telegram</Label>
                   <p className={clsx('text-sm rounded-xl border px-4 py-3', theme.card, theme.muted)}>
                     @{tgBuyer.username.replace(/^@/, '')}
                   </p>
@@ -784,14 +792,14 @@ export function ShopClientView({ slug, initialDoc }) {
                   ) : null}
                   {phoneViaContact && cust.phone.trim() ? (
                     <div>
-                      <Label>Телефон</Label>
+                        <Label className={theme.panelSubtle}>Телефон</Label>
                       <p className={clsx('text-sm rounded-xl border px-4 py-3', theme.card, theme.muted)}>
                         {cust.phone}
                       </p>
                     </div>
                   ) : (
                     <div>
-                      <Label>Телефон</Label>
+                        <Label className={theme.panelSubtle}>Телефон</Label>
                       <Input value={cust.phone} onChange={(e) => setCust({ ...cust, phone: e.target.value })} />
                     </div>
                   )}

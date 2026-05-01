@@ -9,6 +9,10 @@ export function shopThemeClass(styleId) {
       btn: 'bg-sky-600 text-white',
       muted: 'text-slate-500',
       font: 'font-sans',
+      panel: 'bg-white border-slate-200',
+      panelText: 'text-slate-900',
+      panelSubtle: 'text-slate-600',
+      panelBorder: 'border-slate-200',
     },
     2: {
       shell: 'bg-[#fff8ef] text-[#3f2f1f]',
@@ -17,6 +21,10 @@ export function shopThemeClass(styleId) {
       btn: 'bg-amber-600 text-white',
       muted: 'text-amber-800/70',
       font: 'font-serif',
+      panel: 'bg-[#fffdf8] border-amber-200',
+      panelText: 'text-[#3f2f1f]',
+      panelSubtle: 'text-amber-900/75',
+      panelBorder: 'border-amber-200',
     },
     3: {
       shell: 'bg-[#0a0a10] text-white',
@@ -25,6 +33,10 @@ export function shopThemeClass(styleId) {
       btn: 'bg-fuchsia-500 text-white',
       muted: 'text-white/60',
       font: 'font-sans',
+      panel: 'bg-[#161623] border-white/10',
+      panelText: 'text-white',
+      panelSubtle: 'text-white/70',
+      panelBorder: 'border-white/10',
     },
     4: {
       shell: 'bg-[#0f1719] text-teal-50',
@@ -33,6 +45,10 @@ export function shopThemeClass(styleId) {
       btn: 'bg-teal-500 text-teal-950',
       muted: 'text-teal-100/55',
       font: 'font-mono',
+      panel: 'bg-[#13262a] border-teal-500/25',
+      panelText: 'text-teal-50',
+      panelSubtle: 'text-teal-100/70',
+      panelBorder: 'border-teal-500/25',
     },
     5: {
       shell: 'bg-[#111827] text-slate-100',
@@ -41,6 +57,10 @@ export function shopThemeClass(styleId) {
       btn: 'bg-indigo-500 text-white',
       muted: 'text-slate-300/70',
       font: 'font-sans',
+      panel: 'bg-[#1a2338] border-slate-500/25',
+      panelText: 'text-slate-100',
+      panelSubtle: 'text-slate-300/75',
+      panelBorder: 'border-slate-500/25',
     },
     6: {
       shell: 'bg-[#f4f6ff] text-[#1f2450]',
@@ -49,6 +69,10 @@ export function shopThemeClass(styleId) {
       btn: 'bg-indigo-600 text-white',
       muted: 'text-indigo-500',
       font: 'font-serif',
+      panel: 'bg-white border-indigo-200',
+      panelText: 'text-[#1f2450]',
+      panelSubtle: 'text-indigo-700/75',
+      panelBorder: 'border-indigo-200',
     },
   };
   return map[id] || map[1];
